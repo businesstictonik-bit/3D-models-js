@@ -1,0 +1,98 @@
+(function (Scratch) {
+  'use strict';
+
+  // 3D engine bilan bog'lanish
+  const shared = () => window.threeDSharedLines || [];
+
+  class ThreeDKeySimulator {
+    constructor() {
+      // 1. Dastlabki sozlash: Iframe ichiga klaviatura tinglovchisini yuboramiz
+      this._injectKeyboardListener();
+    }
+
+    _injectKeyboardListener() {
+      // Bu kod 3D dunyo yaratilgan iframe ichida ishga tushadi
+      const injectCode = `
+        if (!window.keyStates) {
+          window.keyStates = {};
+          window.addEventListener('keydown', (e) => {
+            window.keyStates[e.code] = true;
+          });
+          window.addEventListener('keyup', (e) => {
+            window.keyStates[e.code] = false;
+          });
+          console.log("3D Klaviatura tizimi faollashtirildi");
+        }
+      `;
+      shared().push(injectCode);
+    }
+
+    getInfo() {
+      return {
+        id: '3DKeySimulator',
+        name: '3D Tugmalar Simulyatori',
+        color1: '#5cb1d6',
+        blocks: [
+          {
+            opcode: 'initKeys',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'Klaviatura tizimini yoqish/yangilash'
+          },
+          {
+            opcode: 'isKeyPressed',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: '[KEY] tugmasi bosildimi?',
+            arguments: {
+              KEY: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'keyMenu',
+                defaultValue: 'KeyW'
+              }
+            }
+          }
+        ],
+        menus: {
+          keyMenu: {
+            acceptReporters: true,
+            items: [
+              { text: 'W', value: 'KeyW' },
+              { text: 'A', value: 'KeyA' },
+              { text: 'S', value: 'KeyS' },
+              { text: 'D', value: 'KeyD' },
+              { text: 'E', value: 'KeyE' },
+              { text: 'Q', value: 'KeyQ' },
+              { text: 'F', value: 'KeyF' },
+              { text: 'R', value: 'KeyR' },
+              { text: 'Space (Bo‘shliq)', value: 'Space' },
+              { text: 'Shift (Chap)', value: 'ShiftLeft' },
+              { text: 'Ctrl (Chap)', value: 'ControlLeft' },
+              { text: 'Tepaga o‘q', value: 'ArrowUp' },
+              { text: 'Pastga o‘q', value: 'ArrowDown' },
+              { text: 'Chapga o‘q', value: 'ArrowLeft' },
+              { text: 'O‘ngga o‘q', value: 'ArrowRight' },
+              { text: 'Enter', value: 'Enter' },
+              { text: 'Escape', value: 'Escape' }
+            ]
+          }
+        }
+      };
+    }
+
+    // Klaviatura tizimini qo'lda qayta yuklash uchun blok
+    initKeys() {
+      this._injectKeyboardListener();
+    }
+
+    /**
+     * Muhim: Bu blok JS kodini matn sifatida qaytaradi.
+     * U "3D if.js" ichidagi eval() funksiyasi tomonidan 3D dunyo kontekstida ishlatiladi.
+     */
+    isKeyPressed({ KEY }) {
+      // Bu qator eval() ichida TRUE yoki FALSE qaytaradi
+      return `(window.keyStates && window.keyStates['${KEY}'] === true)`;
+    }
+  }
+
+  Scratch.extensions.register(new ThreeDKeySimulator());
+})(Scratch);
+
