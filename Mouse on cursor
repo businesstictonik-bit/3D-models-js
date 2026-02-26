@@ -1,0 +1,98 @@
+(function (Scratch) {
+  'use strict';
+
+  const shared = () => window.threeDSharedLines || [];
+
+  class MauseOnCursor {
+    constructor() {
+      // 3D dunyo (iframe) ichiga sichqoncha boshqaruv mantiqini yuborish
+      this._injectMouseLogic();
+    }
+
+    _injectMouseLogic() {
+      const mouseJS = `
+        if (!window.mouseSetupDone) {
+          window.mouseSensitivity = 0.002;
+          window.isMouseLocked = false;
+
+          // Sichqoncha harakatini kuzatish
+          document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === document.body || window.isMouseLocked) {
+              // yaw va pitch 3D camera & sky.js da global e'lon qilingan
+              if (typeof yaw !== 'undefined' && typeof pitch !== 'undefined') {
+                window.yaw -= e.movementX * window.mouseSensitivity;
+                window.pitch -= e.movementY * window.mouseSensitivity;
+
+                // Pitch chegarasi (tepaga/pastga juda ko'p qayrilmaslik uchun)
+                window.pitch = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, window.pitch));
+              }
+            }
+          });
+
+          // Pointer lock hodisalarini kuzatish
+          document.addEventListener('pointerlockchange', () => {
+            window.isMouseLocked = (document.pointerLockElement === document.body);
+          });
+
+          window.mouseSetupDone = true;
+          console.log("3D Sichqoncha tizimi tayyor.");
+        }
+      `;
+      shared().push(mouseJS);
+    }
+
+    getInfo() {
+      return {
+        id: 'MauseOnCursor',
+        name: '3D Sichqoncha Boshqaruvi',
+        color1: '#FF5722',
+        blocks: [
+          {
+            opcode: 'lockMouse',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'Sichqonchani 3D dunyoga qulflash (FPS)'
+          },
+          {
+            opcode: 'unlockMouse',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'Sichqonchani ozod qilish'
+          },
+          {
+            opcode: 'setSensitivity',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'Sichqoncha sezgirligi: [SENS]',
+            arguments: {
+              SENS: { type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5 }
+            }
+          },
+          {
+            opcode: 'isMouseLocked',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: 'Sichqoncha qulflanganmi?'
+          }
+        ]
+      };
+    }
+
+    lockMouse() {
+      // Brauzer xavfsizligi uchun foydalanuvchi bir marta bosishi shart
+      shared().push(`document.body.requestPointerLock();`);
+    }
+
+    unlockMouse() {
+      shared().push(`document.exitPointerLock();`);
+    }
+
+    setSensitivity({ SENS }) {
+      const val = SENS * 0.005; // Normalizatsiya
+      shared().push(`window.mouseSensitivity = ${val};`);
+    }
+
+    isMouseLocked() {
+      return `(document.pointerLockElement === document.body)`;
+    }
+  }
+
+  Scratch.extensions.register(new MauseOnCursor());
+})(Scratch);
+
